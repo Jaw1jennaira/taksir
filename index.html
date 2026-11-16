@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="description" content="Taksir — taksir harga laptop bekas dengan rincian transparan, buat teks listing, dan etalase toko. Offline-first.">
+  <title>Taksir — Taksir Harga Laptop Bekas</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f766e'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3ET%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+  <div id="offline-banner" class="offline-banner" hidden>Offline — data tersimpan di perangkat</div>
+
+  <header class="app-header">
+    <a class="brand" href="#/">Taksir</a>
+    <p class="tagline">Taksir harga laptop bekas — transparan, bisa ditunjukkan ke pembeli.</p>
+    <nav class="app-nav" aria-label="Navigasi utama">
+      <a href="#/" data-nav="home">Beranda</a>
+      <a href="#/tambah" data-nav="add">Tambah Barang</a>
+      <a href="#/toko" data-nav="store">Toko Saya</a>
+      <a href="#/pengaturan" data-nav="settings">Pengaturan</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- ============ HOME / INVENTORY ============ -->
+    <section id="view-home" class="view" aria-labelledby="home-title">
+      <h1 id="home-title">Barang Saya</h1>
+      <p class="muted">Daftar laptop yang kamu jual. Ketuk barang untuk melihat taksiran harganya.</p>
+      <div id="home-summary" class="summary"></div>
+      <div id="inventory-list" class="item-grid"></div>
+      <p id="inventory-empty" class="empty-state" hidden>Belum ada barang. Tambahkan laptop pertamamu 👇</p>
+      <a class="btn btn-primary btn-block" href="#/tambah">+ Tambah Barang</a>
+    </section>
+
+    <!-- ============ ADD / EDIT FORM ============ -->
+    <section id="view-add" class="view" aria-labelledby="add-title" hidden>
+      <h1 id="add-title">Tambah Barang</h1>
+      <p class="muted">Isi kondisi laptop apa adanya — taksiran dihitung dari data yang kamu isi.</p>
+      <form id="item-form" novalidate>
+        <div class="field">
+          <label for="f-photo">Foto (opsional)</label>
+          <input type="file" id="f-photo" accept="image/*">
+          <img id="photo-preview" class="photo-preview" alt="Pratinjau foto barang" hidden>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="f-brand">Merek *</label>
+            <input type="text" id="f-brand" list="brand-list" placeholder="cth. Lenovo" required>
+            <datalist id="brand-list">
+              <option value="Lenovo"><option value="HP"><option value="Dell">
+              <option value="Acer"><option value="Asus"><option value="Apple">
+            </datalist>
+            <p class="field-error" id="err-brand" hidden>Merek wajib diisi.</p>
+          </div>
+          <div class="field">
+            <label for="f-model">Model *</label>
+            <input type="text" id="f-model" placeholder="cth. ThinkPad T480" required>
+            <p class="field-error" id="err-model" hidden>Model wajib diisi.</p>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-cpu">CPU / Prosesor</label>
+          <input type="text" id="f-cpu" placeholder="cth. Core i5-8350U">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="f-ram">RAM (GB) *</label>
+            <input type="number" id="f-ram" min="2" max="128" step="1" placeholder="8" required>
+            <p class="field-error" id="err-ram" hidden>RAM wajib diisi.</p>
+          </div>
+          <div class="field">
+            <label for="f-storage">Penyimpanan (GB) *</label>
+            <input type="number" id="f-storage" min="32" max="8192" step="1" placeholder="256" required>
+            <p class="field-error" id="err-storage" hidden>Penyimpanan wajib diisi.</p>
+          </div>
+          <div class="field">
+            <label for="f-storage-type">Jenis penyimpanan</label>
+            <select id="f-storage-type">
+              <option value="SSD">SSD</option>
+              <option value="HDD">HDD</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="f-screen">Layar (inci)</label>
+            <input type="number" id="f-screen" min="10" max="18" step="0.1" placeholder="14">
+          </div>
+          <div class="field">
+            <label for="f-battery">Kesehatan baterai (%)</label>
+            <input type="number" id="f-battery" min="0" max="100" step="1" placeholder="85">
+          </div>
+          <div class="field">
+            <label for="f-age">Usia pemakaian (tahun)</label>
+            <input type="number" id="f-age" min="0" max="15" step="1" placeholder="5">
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-cosmetic">Kondisi fisik *</label>
+          <select id="f-cosmetic" required>
+            <option value="">— Pilih —</option>
+            <option value="like-new">Seperti baru</option>
+            <option value="good">Baik — lecet pemakaian wajar</option>
+            <option value="fair">Cukup — ada lecet / dent terlihat</option>
+            <option value="poor">Kurang — rusak terlihat / fungsi terganggu</option>
+          </select>
+          <p class="field-error" id="err-cosmetic" hidden>Kondisi fisik wajib dipilih.</p>
+        </div>
+        <fieldset class="field">
+          <legend>Kelengkapan</legend>
+          <label class="check"><input type="checkbox" name="accessories" value="charger"> Charger</label>
+          <label class="check"><input type="checkbox" name="accessories" value="bag"> Tas</label>
+          <label class="check"><input type="checkbox" name="accessories" value="mouse"> Mouse</label>
+          <label class="check"><input type="checkbox" name="accessories" value="box"> Dus / box asli</label>
+        </fieldset>
+        <div class="field">
+          <label for="f-notes">Catatan (opsional)</label>
+          <textarea id="f-notes" rows="3" placeholder="cth. keyboard normal, WiFi lancar, minus:…"></textarea>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">Simpan &amp; Lihat Taksiran</button>
+        <a class="btn btn-ghost btn-block" href="#/">Batal</a>
+      </form>
+    </section>
+
+    <!-- ============ ESTIMATE ============ -->
+    <section id="view-estimate" class="view" aria-labelledby="estimate-title" hidden>
+      <h1 id="estimate-title">Taksiran Harga</h1>
+      <div id="estimate-body"></div>
+      <p class="honesty-note">ℹ️ Taksiran dari data referensi — bukan harga pasar real-time, bukan hasil AI.
+        Dihitung dengan aturan transparan dari data pembanding contoh (bisa diganti).
+        <a href="#/pengaturan">Pelajari cara kerja taksiran</a>.</p>
+      <h2>Data pembanding</h2>
+      <p class="muted small">Data contoh — bisa diganti. Lima listing paling mirip dari data referensi:</p>
+      <div id="comparables-list"></div>
+      <div class="action-row">
+        <a id="btn-to-listing" class="btn btn-primary" href="#">Buat Teks Listing →</a>
+        <a id="btn-wa-estimate" class="btn btn-whatsapp" href="#" target="_blank" rel="noopener">Pesan via WhatsApp</a>
+      </div>
+      <div class="action-row">
+        <button id="btn-mark-sold" class="btn btn-ghost" type="button">Tandai Terjual</button>
+        <button id="btn-delete-item" class="btn btn-danger" type="button">Hapus Barang</button>
+      </div>
+    </section>
+
+    <!-- ============ LISTING ============ -->
+    <section id="view-listing" class="view" aria-labelledby="listing-title" hidden>
+      <h1 id="listing-title">Teks Listing</h1>
+      <p class="muted">Siap salin-tempel ke Facebook, WhatsApp, atau Marketplace. Harga ditulis sebagai taksiran.</p>
+      <h2>Bahasa Indonesia</h2>
+      <pre id="listing-id" class="listing-text"></pre>
+      <button class="btn btn-primary" type="button" data-copy="listing-id">Salin (ID)</button>
+      <h2>English</h2>
+      <pre id="listing-en" class="listing-text"></pre>
+      <button class="btn btn-primary" type="button" data-copy="listing-en">Copy (EN)</button>
+      <div class="action-row">
+        <a id="btn-wa-listing" class="btn btn-whatsapp" href="#" target="_blank" rel="noopener">Pesan via WhatsApp</a>
+        <a id="btn-back-estimate" class="btn btn-ghost" href="#">← Kembali ke Taksiran</a>
+      </div>
+    </section>
+
+    <!-- ============ STOREFRONT ============ -->
+    <section id="view-storefront" class="view" aria-labelledby="store-title" hidden>
+      <div id="store-header"></div>
+      <div id="store-grid" class="item-grid"></div>
+      <p id="store-empty" class="empty-state" hidden>Belum ada barang tersedia di toko ini.</p>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section id="view-settings" class="view" aria-labelledby="settings-title" hidden>
+      <h1 id="settings-title">Pengaturan Toko</h1>
+      <form id="seller-form" novalidate>
+        <div class="field">
+          <label for="s-store">Nama toko</label>
+          <input type="text" id="s-store" placeholder="cth. Toko Laptop Yusmara">
+        </div>
+        <div class="field">
+          <label for="s-name">Nama penjual</label>
+          <input type="text" id="s-name" placeholder="cth. YUSMARA">
+        </div>
+        <div class="field">
+          <label for="s-city">Kota</label>
+          <input type="text" id="s-city" placeholder="cth. Tasikmalaya">
+        </div>
+        <div class="field">
+          <label for="s-wa">Nomor WhatsApp (kode negara, angka saja)</label>
+          <input type="tel" id="s-wa" placeholder="cth. 6285111215414" inputmode="numeric">
+          <p class="field-error" id="err-wa" hidden>Nomor WhatsApp harus angka saja (cth. 62812xxxx).</p>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">Simpan Pengaturan</button>
+      </form>
+      <h2>Cara kerja taksiran</h2>
+      <p>Taksir memakai <strong>model aturan transparan</strong> (bukan AI, bukan
+        machine learning, bukan scraping harga pasar): harga dasar = median harga
+        lima listing pembanding paling mirip dari data referensi, lalu disesuaikan
+        dengan CPU, RAM, penyimpanan, kesehatan baterai, kondisi fisik, usia,
+        dan kelengkapan. Setiap penyesuaian ditampilkan di rincian taksiran.</p>
+      <p>Data referensi saat ini adalah <strong>data contoh</strong> (±14 listing
+        laptop bekas di Indonesia). Kamu bisa menggantinya dengan data pembanding
+        milikmu sendiri di <code>data/comparables.json</code>.</p>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Taksir — taksiran transparan dari data referensi. Bukan harga pasar real-time, bukan AI.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

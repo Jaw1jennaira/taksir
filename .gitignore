@@ -1,0 +1,6 @@
+node_modules/
+*.mp4
+*.mov
+.DS_Store
+Thumbs.db
+# NEVER ignore .kiro/ — Kiro specs, steering, hooks, agents, MCP are part of the submission.

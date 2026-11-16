@@ -1,0 +1,1 @@
+{"name":"taksir","private":true,"scripts":{"test":"node --test tests/pricing.test.js"},"type":"module","version":"0.1.0"}
