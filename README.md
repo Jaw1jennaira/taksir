@@ -1,5 +1,7 @@
 # Taksir — Taksir Harga Laptop Bekas
 
+🌐 **Live app:** https://jaw1jennaira.github.io/taksir/
+
 > Kiroween 2026 · Devpost category: **Frankenstein** — a pricing tool, a
 > listing generator, and a storefront stitched into one offline-first
 > tool for small second-hand sellers.
@@ -93,6 +95,8 @@ now identity-only so estimates are monotone in every adjustment
 field; total adjustments clamp at ±50% with a visible breakdown row)
 — see `design.md` §3.2/§3.5 and the PBT file header.
 
-Remaining: demo video (C4) + Devpost submission (C5) — a later agent
-does deploy + video + submit. Submit by **4 Dec 2026 14:00 PT**
+Remaining: Devpost submission (C5) — needs the user's Devpost account
+(bambagsugiono1208). Demo video recorded 16 Nov 2026 (C4:
+`demo-video.mp4`, gitignored, + `narration-script.md`); YouTube upload
+(unlisted) still pending. Submit by **4 Dec 2026 14:00 PT**
 (5 Dec 05:00 WIB).
