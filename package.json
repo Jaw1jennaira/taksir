@@ -1,1 +1,1 @@
-{"name":"taksir","private":true,"scripts":{"test":"node --test tests/pricing.test.js"},"type":"module","version":"0.1.0"}
+{"name":"taksir","private":true,"scripts":{"test":"node --test tests/pricing.test.js tests/pricing.pbt.test.js"},"type":"module","version":"0.1.0","devDependencies":{"fast-check":"^4.10.2"}}

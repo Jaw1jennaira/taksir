@@ -7,6 +7,15 @@
 // Formula (all percentages relative to the base price unless stated):
 //   base       = median price of matched comparables
 //                (fallback: same-brand median, then global median)
+//   matching    = IDENTITY only (brand, model, storage type — see
+//                similarityScore). Fields that are priced by adjustments
+//                (RAM, cosmetic, battery, age, CPU tier) deliberately do
+//                NOT take part in matching: if they did, changing one of
+//                them would swap the reference set and could move the base
+//                median more than the adjustment, so e.g. more RAM could
+//                LOWER the estimate. Matching on identity only makes the
+//                estimate monotone in every adjustment field (property
+//                tests in tests/pricing.pbt.test.js).
 //   adjustments (each returns { label, percent, amountIDR, reason }):
 //   - CPU tier difference vs matched median tier: +/- 6% per tier step (cap +/-18%)
 //   - RAM vs matched median RAM: +/- 4% per 8 GB step (cap +/-12%)
@@ -17,6 +26,8 @@
 //     median by >=1 year: +4% per year (cap +8%)
 //   - Accessories: +2% each, cap +6% (charger, bag, mouse, original box)
 //   - Screen: no adjustment (shown for transparency; size affects matching only)
+//   - TOTAL: sum of adjustments is clamped to ±50% and the clamp is
+//     shown as its own breakdown row (never silent) — see priceBreakdown.
 // estimate    = round(base * (1 + sum(percent)) to nearest Rp 50.000)
 // low / high  = estimate -/+ 10% (rounded to nearest Rp 50.000)
 // ---------------------------------------------------------------------------
@@ -42,6 +53,12 @@ export function cpuTier(cpuLabel) {
   return 3; // unknown CPU -> middle tier, stated in breakdown
 }
 
+export function isKnownCpu(cpuLabel) {
+  if (!cpuLabel) return false;
+  const label = String(cpuLabel).toLowerCase();
+  return Object.values(CPU_TIERS).flat().some((n) => label.includes(n.toLowerCase()));
+}
+
 export function median(numbers) {
   const sorted = [...numbers].sort((a, b) => a - b);
   if (sorted.length === 0) return 0;
@@ -56,16 +73,16 @@ export function roundTo50k(n) {
 }
 
 function similarityScore(item, comp) {
-  // 0–100 match score. Transparent weights, see design.md.
+  // 0–70 match score. IDENTITY fields only (see design.md §3.2):
+  // brand, model, storage type. RAM, cosmetic condition, battery,
+  // age and CPU tier are priced by adjustments, not by matching —
+  // letting them pick the reference set made the estimate
+  // non-monotone in those fields (e.g. 16 GB RAM estimating lower
+  // than 12 GB on the same laptop).
   let score = 0;
   if (comp.brand === item.brand) score += 40;
   if (comp.model === item.model) score += 25;
-  const tierDiff = Math.abs(cpuTier(comp.cpu) - cpuTier(item.cpu));
-  score += Math.max(0, 15 - tierDiff * 5);
-  const ramDiff = Math.abs((comp.ramGB || 0) - (item.ramGB || 0));
-  score += Math.max(0, 10 - ramDiff);
   if ((comp.storageType || "") === (item.storageType || "")) score += 5;
-  if (comp.cosmetic === item.cosmetic) score += 5;
   return score;
 }
 
@@ -78,6 +95,10 @@ function similarityScore(item, comp) {
  */
 export function findComparables(item, comparables, limit = 5) {
   return comparables
+    // Never match the item against itself (e.g. if a seller's own
+    // listing ever lands in the reference dataset, the estimate
+    // must not be based on itself).
+    .filter((c) => item.id == null || c.id !== item.id)
     .map((comparable) => ({ comparable, score: similarityScore(item, comparable) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
@@ -138,7 +159,8 @@ export function priceBreakdown(item, comparables) {
   const itemTier = cpuTier(item.cpu);
   const tierDiff = itemTier - (typeof medianTier === "number" ? medianTier : itemTier);
   add("CPU", Math.max(-18, Math.min(18, tierDiff * 6)),
-    `CPU tier ${itemTier} vs matched median tier ${medianTier}`);
+    `CPU tier ${itemTier} vs matched median tier ${medianTier}` +
+    (isKnownCpu(item.cpu) ? "" : " (unknown CPU — middle tier 3 used as fallback)"));
 
   // RAM vs matched median
   const ramSteps = Math.round(((item.ramGB || 0) - medianRam) / 8);
@@ -177,7 +199,25 @@ export function priceBreakdown(item, comparables) {
   add("Accessories", Math.min(6, accessoryCount * 2),
     `${accessoryCount} included accessories`);
 
-  const totalPercent = adjustments.reduce((sum, a) => sum + a.percent, 0);
+  const totalPercentRaw = adjustments.reduce((sum, a) => sum + a.percent, 0);
+  // Safety rail (pricing-reviewer: flag totals beyond ±50%): the sum
+  // of adjustments can reach -97% for absurd inputs (e.g. a MacBook
+  // Pro entered as Celeron / 2 GB / HDD / poor / 12 years), which
+  // would collapse the estimate to ~3% of the base price. Clamp the
+  // total to ±50% and show the clamp as its own breakdown row, so
+  // the limit is visible, never silent.
+  let totalPercent = totalPercentRaw;
+  if (totalPercentRaw > 50 || totalPercentRaw < -50) {
+    const clamped = Math.max(-50, Math.min(50, totalPercentRaw));
+    const clampPct = clamped - totalPercentRaw;
+    adjustments.push({
+      label: "Batas total penyesuaian",
+      percent: clampPct,
+      amountIDR: Math.round(basePrice * clampPct / 100),
+      reason: `Total penyesuaian dibatasi ${clamped > 0 ? "+" : ""}${clamped}% agar taksiran tetap wajar`,
+    });
+    totalPercent = clamped;
+  }
   const estimate = roundTo50k(basePrice * (1 + totalPercent / 100));
   const low = roundTo50k(estimate * 0.9);
   const high = roundTo50k(estimate * 1.1);

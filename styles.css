@@ -138,6 +138,12 @@ fieldset { border: 1px solid var(--border); border-radius: var(--radius); paddin
 .comp-card .comp-price { font-weight: 800; color: var(--brand-dark); }
 .comp-card .comp-score { font-size: 0.85rem; color: var(--muted); }
 .low-match { background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; border-radius: var(--radius); padding: 10px 12px; }
+.fallback-note { background: var(--brand-soft); border: 1px solid #99d5cf; border-radius: var(--radius); padding: 10px 12px; font-size: 0.9rem; }
+.loading { text-align: center; color: var(--muted); padding: 12px; }
+.card-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.btn-sm { min-height: 44px; padding: 8px 12px; font-size: 0.9rem; }
+.item-card h3 a { color: inherit; text-decoration: none; }
+.item-card h3 a:hover { text-decoration: underline; }
 
 /* Listing */
 .listing-text {

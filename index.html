@@ -8,7 +8,7 @@
   <title>Taksir — Taksir Harga Laptop Bekas</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f766e'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3ET%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
 </head>
 <body>
   <div id="offline-banner" class="offline-banner" hidden>Offline — data tersimpan di perangkat</div>
@@ -23,6 +23,8 @@
       <a href="#/pengaturan" data-nav="settings">Pengaturan</a>
     </nav>
   </header>
+
+  <div id="loading" class="loading" role="status" hidden>Memuat data…</div>
 
   <main class="container">
     <!-- ============ HOME / INVENTORY ============ -->
@@ -137,6 +139,7 @@
       <div id="comparables-list"></div>
       <div class="action-row">
         <a id="btn-to-listing" class="btn btn-primary" href="#">Buat Teks Listing →</a>
+        <a id="btn-edit-item" class="btn btn-ghost" href="#">Ubah Barang</a>
         <a id="btn-wa-estimate" class="btn btn-whatsapp" href="#" target="_blank" rel="noopener">Pesan via WhatsApp</a>
       </div>
       <div class="action-row">
@@ -196,7 +199,9 @@
         machine learning, bukan scraping harga pasar): harga dasar = median harga
         lima listing pembanding paling mirip dari data referensi, lalu disesuaikan
         dengan CPU, RAM, penyimpanan, kesehatan baterai, kondisi fisik, usia,
-        dan kelengkapan. Setiap penyesuaian ditampilkan di rincian taksiran.</p>
+        dan kelengkapan. Setiap penyesuaian ditampilkan di rincian taksiran.
+        CPU yang tidak dikenali memakai tier tengah (3). Total penyesuaian
+        dibatasi ±50% agar taksiran tetap wajar.</p>
       <p>Data referensi saat ini adalah <strong>data contoh</strong> (±14 listing
         laptop bekas di Indonesia). Kamu bisa menggantinya dengan data pembanding
         milikmu sendiri di <code>data/comparables.json</code>.</p>

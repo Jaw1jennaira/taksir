@@ -4,11 +4,17 @@
 // numbers AND record why here — never change the formula silently.
 // Pinned case: Lenovo ThinkPad T480, i5-8350U, 8 GB, 256 GB SSD,
 // battery 82%, cosmetic good, 5 years, accessories [charger].
-// Top-5 matched: cmp-01, cmp-02, cmp-14, cmp-03, cmp-04
-// (prices 4.5 / 6.2 / 6.8 / 7.8 / 4.8 jt) -> base median Rp 6.200.000.
+// Top-5 matched: cmp-01, cmp-02, cmp-03, cmp-14, cmp-04
+// (prices 4.5 / 6.2 / 7.8 / 6.8 / 4.8 jt) -> base median Rp 6.200.000.
 // Adjustments: storage size -2%, battery -5%, cosmetic -5%,
 // accessories +2% -> total -10% -> estimate Rp 5.600.000,
 // range Rp 5.050.000 – Rp 6.150.000.
+// CHANGE LOG (16 Nov 2026, Phase 2): matching was revised to
+// identity-only (brand + model + storage type, max 70) — see
+// design.md §3.2. The pinned estimate/base/total are UNCHANGED;
+// only match scores changed (cmp-01: 100 -> 70) and the top-5
+// order is now cmp-01, cmp-02, cmp-03, cmp-14, cmp-04 (same set,
+// ties keep dataset order).
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -58,7 +64,7 @@ test("findComparables returns best match first", () => {
   const found = findComparables(T480, COMPARABLES, 5);
   assert.equal(found.length, 5);
   assert.equal(found[0].comparable.id, "cmp-01");
-  assert.equal(found[0].score, 100);
+  assert.equal(found[0].score, 70);
   for (let i = 1; i < found.length; i++) {
     assert.ok(found[i - 1].score >= found[i].score, "scores descend");
   }
@@ -117,6 +123,46 @@ test("generateListing contains only entered fields + estimate", () => {
   assert.match(id, /taksiran/);
   assert.match(en, /FOR SALE/);
   assert.match(en, /estimate/);
+});
+
+test("total adjustments clamp at ±50% and the clamp is shown", () => {
+  // Absurd input whose raw adjustments sum to -97% (found by the
+  // property tests, Phase 2): MacBook Pro entered as Celeron / 2 GB /
+  // HDD / poor / 12 years. The total must clamp to -50% with a
+  // visible breakdown row, never silently collapse the estimate.
+  const absurd = {
+    brand: "Apple", model: "MacBook Pro 13 M1 (2020)", cpu: "Celeron N4020",
+    ramGB: 2, storageGB: 256, storageType: "HDD", batteryHealth: 59,
+    cosmetic: "poor", accessories: [], ageYears: 12,
+  };
+  const b = priceBreakdown(absurd, COMPARABLES);
+  assert.equal(b.basePrice, 7800000);
+  assert.equal(b.totalPercent, -50);
+  assert.equal(b.estimate, 3900000);
+  const clamp = b.adjustments.find((a) => a.label === "Batas total penyesuaian");
+  assert.ok(clamp, "clamp row present");
+  assert.equal(clamp.percent, 47);
+  const sum = b.adjustments.reduce((s, a) => s + a.percent, 0);
+  assert.equal(sum, b.totalPercent);
+});
+
+test("findComparables never returns the item itself", () => {
+  const self = { ...T480, id: "cmp-01" };
+  const found = findComparables(self, COMPARABLES, 5);
+  assert.ok(!found.some((f) => f.comparable.id === "cmp-01"));
+  assert.equal(found.length, 5);
+});
+
+test("unknown CPU fallback is stated in the breakdown reason", () => {
+  const item = {
+    brand: "Apple", model: "MacBook Air M1 (2020)", cpu: "SomeChip X9000",
+    ramGB: 8, storageGB: 256, storageType: "SSD", batteryHealth: 90,
+    cosmetic: "good", accessories: [], ageYears: 4,
+  };
+  const b = priceBreakdown(item, COMPARABLES);
+  const cpuRow = b.adjustments.find((a) => a.label === "CPU");
+  assert.ok(cpuRow, "CPU adjustment present (tier 3 vs median tier 5)");
+  assert.match(cpuRow.reason, /unknown CPU/);
 });
 
 test("formatIDR + median helpers", () => {

@@ -50,7 +50,9 @@ Then open http://localhost:8000 (or the port shown). ES modules require
 ## Tests
 
 ```bash
-npm test        # node:test, zero dependencies
+npm test        # node:test: 14 unit tests + 10 fast-check property tests
+                # (fast-check is a dev-only test dependency; the app
+                # itself still runs with no install)
 ```
 
 ## MCP server (for Kiro / agents)
@@ -79,8 +81,18 @@ Registered for Kiro in `.kiro/mcp.json`. Smoke test record:
 
 ## Status
 
-Scaffold phase (16 Nov 2026): specs + steering + hooks + MCP server
-complete and tested; pricing engine implemented per design; app UI is a
-working skeleton — see `.kiro/specs/taksir/tasks.md` for the
-implementation checklist. Submit by **4 Dec 2026 14:00 PT**
+Phase 2 complete (16 Nov 2026): app fully wired (storage, routing,
+form + photo downscale, estimate + breakdown + comparables, ID/EN
+listing + copy, inventory CRUD, storefront, WhatsApp links, seller
+settings, PWA with real 192/512 px icons, offline reload verified in
+a real headless browser — 35/35 checks, 0 console errors, see
+`VERIFICATION.md`). Tests: 24/24 green, including 10 real
+property-based tests with fast-check (`tests/pricing.pbt.test.js`).
+Two engine bugs found by the property tests and fixed (matching is
+now identity-only so estimates are monotone in every adjustment
+field; total adjustments clamp at ±50% with a visible breakdown row)
+— see `design.md` §3.2/§3.5 and the PBT file header.
+
+Remaining: demo video (C4) + Devpost submission (C5) — a later agent
+does deploy + video + submit. Submit by **4 Dec 2026 14:00 PT**
 (5 Dec 05:00 WIB).

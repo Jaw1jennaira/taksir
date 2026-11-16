@@ -1,6 +1,6 @@
 // Taksir service worker — cache-first for the app shell, so the app
 // loads offline after the first visit. Bump CACHE when shell files change.
-const CACHE = "taksir-v1";
+const CACHE = "taksir-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,6 +9,8 @@ const APP_SHELL = [
   "./src/pricing.js",
   "./data/comparables.json",
   "./manifest.json",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
 ];
 
 self.addEventListener("install", (event) => {

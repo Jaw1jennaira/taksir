@@ -18,6 +18,7 @@ function loadJSON(key, fallback) {
     return raw ? JSON.parse(raw) : fallback;
   } catch (err) {
     console.warn(`Taksir: corrupt ${key}, resetting.`, err);
+    try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
     return fallback;
   }
 }
@@ -95,11 +96,14 @@ function parseHash() {
 }
 async function route() {
   const { parts, params } = parseHash();
+  // Loading state while the reference dataset loads (B11).
+  const loading = $("#loading");
+  if (!comparablesCache) loading.hidden = false;
   const comparables = await loadComparables();
+  loading.hidden = true;
   if (parts.length === 0) { renderHome(comparables); showView("view-home"); }
   else if (parts[0] === "tambah") { renderAddForm(params.get("id")); showView("view-add"); }
   else if (parts[0] === "barang" && parts[1] && !parts[2]) { renderEstimate(parts[1], comparables); showView("view-estimate"); }
-  else if (parts[0] === "barang" && parts[1] === "listing" && parts[2]) { renderListing(parts[2], comparables); showView("view-listing"); }
   else if (parts[0] === "barang" && parts[1] && parts[2] === "listing") { renderListing(parts[1], comparables); showView("view-listing"); }
   else if (parts[0] === "toko") { renderStorefront(parts[1] ?? null); showView("view-storefront"); }
   else if (parts[0] === "pengaturan") { renderSettings(); showView("view-settings"); }
@@ -118,16 +122,45 @@ function renderHome(comparables) {
   $("#inventory-empty").hidden = items.length > 0;
   list.innerHTML = items.map((item) => {
     const est = estimatePrice(item, comparables);
-    return `<a class="item-card" href="#/barang/${item.id}">
-      ${item.photo ? `<img src="${escapeHtml(item.photo)}" alt="Foto ${escapeHtml(itemTitle(item))}">` : ""}
+    const sold = item.status === "sold";
+    return `<article class="item-card">
+      ${item.photo ? `<a href="#/barang/${item.id}"><img src="${escapeHtml(item.photo)}" alt="Foto ${escapeHtml(itemTitle(item))}"></a>` : ""}
       <div class="item-card-body">
-        <h3>${escapeHtml(itemTitle(item))}</h3>
+        <h3><a href="#/barang/${item.id}">${escapeHtml(itemTitle(item))}</a></h3>
         <p class="muted small">${escapeHtml(itemSpecs(item))}</p>
         <p class="price">${formatIDR(est.estimate)}</p>
-        <span class="chip ${item.status === "sold" ? "chip-sold" : "chip-available"}">${item.status === "sold" ? "Terjual" : "Tersedia"}</span>
-      </div></a>`;
+        <p class="muted small">Taksiran dari data referensi</p>
+        <span class="chip ${sold ? "chip-sold" : "chip-available"}">${sold ? "Terjual" : "Tersedia"}</span>
+        <div class="card-actions">
+          <a class="btn btn-ghost btn-sm" href="#/barang/${item.id}">Detail</a>
+          <a class="btn btn-ghost btn-sm" href="#/tambah?id=${item.id}">Ubah</a>
+          <button class="btn btn-ghost btn-sm" type="button" data-action="toggle-sold" data-id="${item.id}">${sold ? "Tandai Tersedia" : "Tandai Terjual"}</button>
+          <button class="btn btn-danger btn-sm" type="button" data-action="delete" data-id="${item.id}">Hapus</button>
+        </div>
+      </div></article>`;
   }).join("");
 }
+
+// Home inventory actions (delegated): mark sold/available + delete w/ confirm.
+$("#inventory-list").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const items = loadItems();
+  const item = items.find((i) => i.id === btn.dataset.id);
+  if (!item) return;
+  if (btn.dataset.action === "toggle-sold") {
+    item.status = item.status === "sold" ? "available" : "sold";
+    item.updatedAt = Date.now();
+    saveItems(items);
+    showToast(item.status === "sold" ? "Ditandai terjual." : "Ditandai tersedia.");
+    route();
+  } else if (btn.dataset.action === "delete") {
+    if (!confirm(`Hapus ${itemTitle(item)}? Tindakan ini tidak bisa dibatalkan.`)) return;
+    saveItems(items.filter((i) => i.id !== item.id));
+    showToast("Barang dihapus.");
+    route();
+  }
+});
 
 // ------------------------------------------------------------- add / edit
 let editingId = null;
@@ -235,6 +268,13 @@ function renderEstimate(id, comparables) {
   if (!item) { body.innerHTML = "<p>Barang tidak ditemukan. <a href='#/'>Kembali ke Beranda</a></p>"; $("#comparables-list").innerHTML = ""; return; }
   const b = priceBreakdown(item, comparables);
   const bestScore = b.matched[0]?.matchScore ?? 0;
+  // REQ-2.4: state which fallback produced the base price.
+  const fallbackNote = {
+    "matched-median": "",
+    "same-brand-median": "Tidak ada pembanding yang cukup mirip — harga dasar memakai median listing merek yang sama.",
+    "global-median": "Tidak ada pembanding yang cukup mirip — harga dasar memakai median seluruh data referensi.",
+    "no-data": "Tidak ada data referensi — taksiran tidak dapat dihitung.",
+  }[b.baseSource] ?? "";
   body.innerHTML = `
     ${item.photo ? `<img src="${escapeHtml(item.photo)}" alt="Foto ${escapeHtml(itemTitle(item))}" style="border-radius:12px;max-height:260px;width:100%;object-fit:cover">` : ""}
     <h2>${escapeHtml(itemTitle(item))}</h2>
@@ -244,6 +284,7 @@ function renderEstimate(id, comparables) {
       <div class="estimate-value">${formatIDR(b.estimate)}</div>
       <div class="estimate-range">Kisaran wajar: ${formatIDR(b.low)} – ${formatIDR(b.high)}</div>
     </div>
+    ${fallbackNote ? `<p class="fallback-note">ℹ️ ${escapeHtml(fallbackNote)}</p>` : ""}
     ${bestScore < 30 ? `<p class="low-match">⚠️ Kecocokan pembanding rendah (skor ${bestScore}) — taksiran ini kurang yakin. Tambahkan data pembanding yang mirip di data/comparables.json.</p>` : ""}
     <h2>Rincian taksiran</h2>
     <table class="breakdown">
@@ -263,7 +304,7 @@ function renderEstimate(id, comparables) {
       <span class="muted small">· ${escapeHtml(c.city ?? "")}</span>
     </div>`).join("") || "<p class='muted'>Tidak ada data pembanding.</p>";
   $("#btn-to-listing").href = `#/barang/${item.id}/listing`;
-  $("#btn-back-estimate").href = `#/barang/${item.id}`;
+  $("#btn-edit-item").href = `#/tambah?id=${item.id}`;
   const wa = waLink(item, b.estimate);
   const waBtn = $("#btn-wa-estimate");
   if (wa) { waBtn.href = wa; waBtn.textContent = "Pesan via WhatsApp"; }
@@ -328,7 +369,8 @@ function renderStorefront(publicId) {
         <p class="muted small">Taksiran dari data referensi</p>
         <div class="action-row">
           <a class="btn btn-ghost" href="#/barang/${item.id}">Detail</a>
-          ${wa ? `<a class="btn btn-whatsapp" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+          ${wa ? `<a class="btn btn-whatsapp" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`
+            : !isPublic ? `<a class="btn btn-ghost" href="#/pengaturan">Atur nomor WhatsApp</a>` : ""}
         </div>
       </div></div>`;
   }).join("");

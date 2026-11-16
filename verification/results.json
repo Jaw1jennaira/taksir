@@ -1,0 +1,177 @@
+[
+  {
+    "name": "home renders empty state",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "service worker registered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings saved (toast)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "empty form blocked, brand error visible",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no item saved after invalid submit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "photo preview downscaled to ≤1200px",
+    "ok": true,
+    "detail": "naturalWidth=1200"
+  },
+  {
+    "name": "pinned estimate Rp 5.600.000",
+    "ok": true,
+    "detail": "Rp 5.600.000"
+  },
+  {
+    "name": "range Rp 5.050.000 – 6.150.000",
+    "ok": true,
+    "detail": "Kisaran wajar: Rp 5.050.000 – Rp 6.150.000"
+  },
+  {
+    "name": "estimate label present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "breakdown table has base + adjustments + total",
+    "ok": true,
+    "detail": "rows=6"
+  },
+  {
+    "name": "5 comparables shown",
+    "ok": true,
+    "detail": "n=5"
+  },
+  {
+    "name": "sample-data notice present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "honesty note present",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "WhatsApp link on estimate (wa.me + number + item)",
+    "ok": true,
+    "detail": "https://wa.me/6285111215414?text=Halo!%20Saya%20mau%20tanya%20soal%20Lenovo%20ThinkPad%20T480%20(Rp%205.600.000%20%E2%80"
+  },
+  {
+    "name": "ID listing has price + taksiran",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "EN listing has price + estimate",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ID listing has entered specs",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "copy button shows toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "WhatsApp link on listing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "home lists 1 item",
+    "ok": true,
+    "detail": "n=1"
+  },
+  {
+    "name": "home card shows estimate label",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "home card shows Tersedia chip",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "edit form prefilled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "mark sold: chip becomes Terjual",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "storefront header shows store name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "sold item hidden from storefront",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "available again: storefront shows item",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "WhatsApp button on storefront card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "public storefront has no edit/delete controls",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "offline: app shell loads",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "offline: saved inventory still listed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "offline: estimate still computes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "360px: no horizontal overflow",
+    "ok": true,
+    "detail": "scrollWidth=360"
+  },
+  {
+    "name": "delete removes item, empty state returns",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "zero console errors / page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

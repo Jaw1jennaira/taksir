@@ -106,20 +106,39 @@ Unknown CPU → tier 3 (middle), stated in the breakdown reason.
 
 ### 3.2 Matching — `findComparables(item, comparables, limit=5)`
 
-Similarity score 0–100 per comparable:
+Similarity score 0–70 per comparable. Matching uses IDENTITY fields
+only — brand, model, storage type:
 
 | Rule | Points |
 |---|---|
 | Same brand | +40 |
 | Same model | +25 |
-| CPU tier closeness | +15 − 5 × \|tier diff\| (min 0) |
-| RAM closeness | +10 − \|RAM diff in GB\| (min 0) |
 | Same storage type | +5 |
-| Same cosmetic level | +5 |
 
-Sort descending by score, take top 5. A best score < 30 is flagged
+RAM, cosmetic condition, battery health, age, and CPU tier are
+deliberately NOT part of matching: they are priced by the adjustments
+in §3.4. Letting them also pick the reference set made the estimate
+non-monotone — e.g. on the pinned T480 case, 16 GB RAM estimated
+Rp 5.700.000 while 12 GB estimated Rp 5.850.000, because the matched
+set (and therefore the base median and the adjustment reference
+medians) changed. A brute-force check (4.000 random items) found
+monotonicity violations in ~40% of items for RAM and ~25% for
+cosmetic condition under the old scoring. Matching on identity only
+makes the estimate monotone in every adjustment field, which the
+property tests in `tests/pricing.pbt.test.js` now assert.
+
+Sort descending by score (ties keep dataset order — `Array.sort` is
+stable), take top 5. A row whose `id` equals the item's `id` is never
+returned (the item must not match against itself). A best score < 30 is flagged
 in the UI ("kecocokan rendah — taksiran kurang yakin") but the estimate
 still uses the fallback median (REQ-2.4).
+
+> **Change log (16 Nov 2026, Phase 2):** matching was brand 40 +
+> model 25 + CPU-tier closeness 15 + RAM closeness 10 + storage type 5
+> + cosmetic 5 (max 100). The pinned T480 estimate
+> (Rp 5.600.000, base Rp 6.200.000, total −10%) is UNCHANGED by this
+> revision — the top-5 set is the same; only the match scores changed
+> (cmp-01: 100 → 70). Pinned test numbers updated accordingly.
 
 ### 3.3 Base price
 
@@ -154,6 +173,17 @@ affects matching indirectly via model match).
 
 ```
 totalPercent = Σ adjustments
+```
+
+**Total clamp (safety rail, added 16 Nov 2026 Phase 2):** the raw sum
+can reach −97% for absurd inputs (e.g. a MacBook Pro entered as
+Celeron / 2 GB / HDD / poor / 12 years old), collapsing the estimate
+to ~3% of the base price. The total is therefore clamped to ±50% and
+the clamp is shown as its own breakdown row ("Batas total
+penyesuaian") so the limit is visible, never silent. The pinned T480
+case (total −10%) is unaffected.
+
+```
 estimate     = roundTo50k(base × (1 + totalPercent/100))
 low          = roundTo50k(estimate × 0.90)
 high         = roundTo50k(estimate × 1.10)
@@ -169,11 +199,10 @@ Item: Lenovo ThinkPad T480, Core i5-8350U (tier 3), 8 GB RAM,
 256 GB SSD, 14", battery 82%, cosmetic good, 5 years old, accessories
 [charger]. Dataset: the 14 seeded rows.
 
-1. Matching: cmp-01 (same brand+model, tier 3, 8 GB, SSD, good) scores
-   40+25+15+10+5+5 = 100; cmp-02 (same model, tier 4, 16 GB) ≈ 82;
-   cmp-14 (same brand, IdeaPad Slim 3, tier 3, 8 GB) ≈ 70;
-   cmp-03 (same brand, X1 Carbon) ≈ 57; cmp-04 (HP EliteBook, tier 3,
-   8 GB, SSD, good) ≈ 35 — top 5.
+1. Matching: cmp-01 (same brand+model, SSD) scores 40+25+5 = 70;
+   cmp-02 (same brand+model, SSD) also 70; cmp-03 (same brand, SSD)
+   45; cmp-14 (same brand, SSD) 45; cmp-04 (SSD only) 5 — top 5
+   (ties keep dataset order).
 2. Base = median of top-5 prices {4.500.000, 6.200.000, 6.800.000,
    7.800.000, 4.800.000} = **Rp 6.200.000** (`matched-median`).
 3. Matched medians: tier 3, RAM 8 GB, storage 512 GB, age 5 years.
